@@ -1,5 +1,6 @@
 import { Redirect, Stack } from 'expo-router'
 import { useEffect } from 'react'
+import { BootScreen } from '../../src/components/BootScreen'
 import { api } from '../../src/services/api'
 import { prepareNotifications } from '../../src/services/notifications'
 import type { PublicUser } from '../../src/shared'
@@ -18,10 +19,10 @@ export default function AppLayout() {
         .then((updated) => useAuthStore.getState().setUser(updated))
         .catch(() => undefined)
     }
-    void prepareNotifications()
+    void prepareNotifications().catch(() => undefined)
   }, [user?.id, user?.timezone])
 
-  if (!hydrated) return null
+  if (!hydrated) return <BootScreen />
   if (!accessToken) return <Redirect href="/(auth)/login" />
   return <Stack screenOptions={{ headerShown: false }} />
 }

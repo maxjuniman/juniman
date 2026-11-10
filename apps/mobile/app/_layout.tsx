@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
 import { useFonts } from 'expo-font'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { BootScreen } from '../src/components/BootScreen'
 import { useAuthStore } from '../src/stores/auth-store'
 import { ThemeProvider } from '../src/theme/ThemeProvider'
 
@@ -29,10 +30,10 @@ export default function RootLayout() {
   }, [])
 
   useEffect(() => {
-    if ((loaded || error) && hydrated) SplashScreen.hideAsync().catch(() => undefined)
-  }, [loaded, error, hydrated])
+    SplashScreen.hideAsync().catch(() => undefined)
+  }, [])
 
-  if (!loaded && !error) return null
+  if ((!loaded && !error) || !hydrated) return <BootScreen />
 
   return (
     <SafeAreaProvider>

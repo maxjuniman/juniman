@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import { formatLongDate, parseDateInput } from '../lib/dates'
 import { ApiError } from '../services/api'
 import { deleteTask, muteTask } from '../services/tasks'
-import { reminderLabel, type TaskItem } from '../shared'
+import { recurrenceLabel, reminderLabel, type TaskItem } from '../shared'
 import { useTheme } from '../theme/ThemeProvider'
 import { Button } from './Button'
 import { ModalSheet } from './ModalSheet'
@@ -20,6 +20,7 @@ export function TaskDetailsModal({ task, onClose, onChanged }: Props) {
   const [loading, setLoading] = useState<'mute' | 'delete' | null>(null)
   const [error, setError] = useState<string | null>(null)
   const family = task?.visibility === 'FAMILY'
+  const weekly = task?.recurrence === 'WEEKLY'
 
   const close = () => {
     setConfirming(false)
@@ -72,6 +73,7 @@ export function TaskDetailsModal({ task, onClose, onChanged }: Props) {
           <Text style={{ color: palette.text, fontFamily: fonts.extra, fontSize: 24 }}>{task.title}</Text>
           <Info label="Data" value={formatLongDate(parseDateInput(task.date))} />
           <Info label="Horário" value={task.time} />
+          {weekly ? <Info label="Repetição" value={recurrenceLabel(task.date)} /> : null}
           <Info label="Tipo" value={family ? 'Familiar' : 'Pessoal'} />
           <Info label="Criada por" value={task.createdBy.name} />
           <Info label="Notificação" value={reminder} />
@@ -94,9 +96,11 @@ export function TaskDetailsModal({ task, onClose, onChanged }: Props) {
       {task && confirming ? (
         <View style={styles.wrap}>
           <Text style={{ color: palette.text, fontFamily: fonts.regular, fontSize: 16, lineHeight: 22 }}>
-            {family
-              ? 'A tarefa será removida do calendário de toda a família. Essa ação não pode ser desfeita.'
-              : 'Essa ação não pode ser desfeita.'}
+            {weekly
+              ? 'Esta tarefa se repete toda semana. Excluir remove todas as ocorrências.'
+              : family
+                ? 'A tarefa será removida do calendário de toda a família. Essa ação não pode ser desfeita.'
+                : 'Essa ação não pode ser desfeita.'}
           </Text>
           {error ? <Text style={{ color: palette.danger, fontFamily: fonts.semibold }}>{error}</Text> : null}
           <Button title="Excluir" variant="danger" onPress={remove} loading={loading === 'delete'} />

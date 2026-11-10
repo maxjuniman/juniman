@@ -30,7 +30,7 @@ export function DayAgenda({ date, tasks, currentUserId, onPressTask }: Props) {
         </View>
       ) : (
         items.map((task) => (
-          <View key={task.id} style={styles.row}>
+          <View key={`${task.id}-${task.date}`} style={styles.row}>
             <Text style={{ width: 52, color: palette.primaryDark, fontFamily: fonts.bold }}>{task.time}</Text>
             <View style={styles.card}>
               <TaskCard task={task} currentUserId={currentUserId} onPress={() => onPressTask(task)} />

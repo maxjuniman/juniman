@@ -7,9 +7,22 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/brasao.jpg",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F4F1"
+    },
     "plugins": [
       "expo-router",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#F7F4F1",
+          "image": "./assets/brasao.jpg",
+          "resizeMode": "contain",
+          "imageWidth": 200
+        }
+      ],
       "expo-image",
       "expo-font",
       "@react-native-community/datetimepicker",

@@ -3,7 +3,18 @@ import { z } from 'zod'
 export const GENDERS = ['MALE', 'FEMALE'] as const
 export const VISIBILITIES = ['PERSONAL', 'FAMILY'] as const
 export const FAMILY_ROLES = ['ADMIN', 'MEMBER'] as const
+export const RECURRENCES = ['NONE', 'WEEKLY'] as const
 export const REMINDER_MINUTE_VALUES = [120, 60, 30, 10] as const
+
+export const WEEKDAY_OPTIONS = [
+  { weekday: 1, short: 'Seg', name: 'segunda-feira' },
+  { weekday: 2, short: 'Ter', name: 'terça-feira' },
+  { weekday: 3, short: 'Qua', name: 'quarta-feira' },
+  { weekday: 4, short: 'Qui', name: 'quinta-feira' },
+  { weekday: 5, short: 'Sex', name: 'sexta-feira' },
+  { weekday: 6, short: 'Sáb', name: 'sábado' },
+  { weekday: 0, short: 'Dom', name: 'domingo' },
+] as const
 
 export const REMINDER_OPTIONS = [
   { minutes: 120, label: '2 horas antes' },
@@ -15,6 +26,7 @@ export const REMINDER_OPTIONS = [
 export type Gender = (typeof GENDERS)[number]
 export type TaskVisibility = (typeof VISIBILITIES)[number]
 export type FamilyRole = (typeof FAMILY_ROLES)[number]
+export type Recurrence = (typeof RECURRENCES)[number]
 export type ReminderMinutes = (typeof REMINDER_MINUTE_VALUES)[number]
 
 const requiredText = (message: string) =>
@@ -90,6 +102,7 @@ export const taskSchema = z
       required_error: 'Escolha com quem compartilhar.',
       invalid_type_error: 'Escolha com quem compartilhar.',
     }),
+    recurrence: z.enum(RECURRENCES).default('NONE'),
   })
   .superRefine((value, context) => {
     const [year, month, day] = value.date.split('-').map(Number)
@@ -148,7 +161,8 @@ export const dateRangeSchema = z
 
 export type RegisterInput = z.infer<typeof registerSchema>
 export type LoginInput = z.infer<typeof loginSchema>
-export type TaskInput = z.infer<typeof taskSchema>
+export type TaskInput = z.output<typeof taskSchema>
+export type TaskFormValues = z.input<typeof taskSchema>
 
 export type PublicUser = {
   id: string
@@ -174,6 +188,7 @@ export type TaskItem = {
   reminderEnabled: boolean
   reminderMinutes: number | null
   visibility: TaskVisibility
+  recurrence: Recurrence
   familyId: string | null
   muted: boolean
   canDelete: boolean
@@ -217,6 +232,14 @@ export type ApiErrorBody = {
     message: string
     details?: Array<{ path: string; message: string }>
   }
+}
+
+export function recurrenceLabel(date: string) {
+  const weekday = new Date(`${date}T00:00:00.000Z`).getUTCDay()
+  const match = WEEKDAY_OPTIONS.find((item) => item.weekday === weekday)
+  if (!match) return 'Toda semana'
+  const article = weekday === 0 || weekday === 6 ? 'Todo' : 'Toda'
+  return `${article} ${match.name}`
 }
 
 export function reminderLabel(minutes: number) {

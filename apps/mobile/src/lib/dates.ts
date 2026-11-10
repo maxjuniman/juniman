@@ -73,3 +73,13 @@ export function monthGrid(date: Date) {
 export function sameDay(left: Date, right: Date) {
   return formatDateInput(left) === formatDateInput(right)
 }
+
+export function weekdayOfDate(date: string) {
+  return parseDateInput(date).getDay()
+}
+
+export function alignDateToWeekday(date: string, weekday: number) {
+  const current = parseDateInput(date)
+  const delta = (weekday - current.getDay() + 7) % 7
+  return formatDateInput(addDays(current, delta))
+}

@@ -30,12 +30,17 @@ export async function prepareNotifications() {
     return
   }
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('tasks', {
-      name: 'Compromissos',
-      importance: Notifications.AndroidImportance.HIGH,
-      sound: 'default',
-    })
+  const expoGo = Constants.executionEnvironment === 'storeClient' || Constants.appOwnership === 'expo'
+  if (Platform.OS === 'android' && !expoGo) {
+    try {
+      await Notifications.setNotificationChannelAsync('tasks', {
+        name: 'Compromissos',
+        importance: Notifications.AndroidImportance.HIGH,
+        sound: 'default',
+      })
+    } catch (error) {
+      console.warn('[notifications] canal indisponível', error)
+    }
   }
 
   const granted = await ensurePermission()
@@ -78,17 +83,27 @@ export async function syncLocalNotifications(tasks: TaskItem[]) {
     if (task.visibility === 'FAMILY' && pushEnabled) continue
     const when = new Date(new Date(task.startsAt).getTime() - task.reminderMinutes * 60_000)
     if (when.getTime() <= now) continue
-    desired.set(`task-${task.id}`, { task, when })
+    const identifier = `task-${task.id}`
+    const current = desired.get(identifier)
+    if (!current || when.getTime() < current.when.getTime()) desired.set(identifier, { task, when })
   }
 
-  await Promise.all(
-    scheduled
-      .filter((item) => item.identifier.startsWith('task-') && !desired.has(item.identifier))
-      .map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier)),
-  )
+  const stale = scheduled.filter((item) => {
+    if (!item.identifier.startsWith('task-')) return false
+    const next = desired.get(item.identifier)
+    if (!next) return true
+    const trigger = item.trigger
+    const scheduledAt =
+      trigger && typeof trigger === 'object' && 'date' in trigger
+        ? new Date(trigger.date as string | number | Date).getTime()
+        : Number.NaN
+    return Math.abs(scheduledAt - next.when.getTime()) > 1000
+  })
+  const staleIds = new Set(stale.map((item) => item.identifier))
+  await Promise.all(stale.map((item) => Notifications.cancelScheduledNotificationAsync(item.identifier)))
 
   for (const [identifier, entry] of desired) {
-    if (scheduled.some((item) => item.identifier === identifier)) continue
+    if (scheduled.some((item) => item.identifier === identifier) && !staleIds.has(identifier)) continue
     await Notifications.scheduleNotificationAsync({
       identifier,
       content: {

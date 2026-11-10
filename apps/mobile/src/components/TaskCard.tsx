@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { formatShortDate } from '../lib/dates'
-import type { TaskItem } from '../shared'
+import { recurrenceLabel, type TaskItem } from '../shared'
 import { useTheme } from '../theme/ThemeProvider'
 
 type Props = {
@@ -32,6 +32,7 @@ export function TaskCard({ task, currentUserId, onPress }: Props) {
         </Text>
         <Text style={{ color: palette.muted, fontFamily: fonts.semibold, fontSize: 12 }}>
           {family ? 'Família' : 'Pessoal'}
+          {task.recurrence === 'WEEKLY' ? ` · ${recurrenceLabel(task.date)}` : ''}
           {owner ? ` · ${owner}` : ''}
         </Text>
       </View>

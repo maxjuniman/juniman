@@ -1,5 +1,6 @@
 import type { Task, User } from '@prisma/client'
 import { dateOnly, formatDateOnly, toUtcDate } from '../../lib/dates'
+import { weeklyDates } from '../../lib/recurrence'
 import { AppError } from '../../lib/errors'
 import { prisma } from '../../lib/prisma'
 import type { TaskInput, TaskItem } from '../../shared'
@@ -37,6 +38,7 @@ function toTaskItem(task: TaskWithCreator, userId: string, adminFamilyIds: Set<s
     reminderEnabled: task.reminderEnabled,
     reminderMinutes: task.reminderMinutes,
     visibility: task.visibility,
+    recurrence: task.recurrence,
     familyId: task.familyId,
     muted: task.notificationSettings?.[0]?.muted ?? false,
     canDelete: canDeleteTask(task, userId, adminFamilyIds),
@@ -53,20 +55,38 @@ function visibleWhere(userId: string, familyIds: string[]) {
   }
 }
 
+function expandTask(task: TaskWithCreator, from: string, to: string, userId: string, adminFamilyIds: Set<string>): TaskItem[] {
+  const base = toTaskItem(task, userId, adminFamilyIds)
+  if (task.recurrence !== 'WEEKLY') return [base]
+  return weeklyDates(formatDateOnly(task.date), from, to).map((day) => ({
+    ...base,
+    date: day,
+    startsAt: toUtcDate(day, task.time, task.timezone).toISOString(),
+  }))
+}
+
 export async function listTasks(userId: string, from: string, to: string) {
   const access = await getFamilyAccess(userId)
   const tasks = await prisma.task.findMany({
     where: {
-      date: { gte: dateOnly(from), lte: dateOnly(to) },
-      ...visibleWhere(userId, access.familyIds),
+      AND: [
+        visibleWhere(userId, access.familyIds),
+        {
+          OR: [
+            { recurrence: 'NONE', date: { gte: dateOnly(from), lte: dateOnly(to) } },
+            { recurrence: 'WEEKLY', date: { lte: dateOnly(to) } },
+          ],
+        },
+      ],
     },
     include: {
       ...taskInclude,
       notificationSettings: { where: { userId }, select: { muted: true } },
     },
-    orderBy: [{ date: 'asc' }, { time: 'asc' }, { title: 'asc' }],
   })
-  return tasks.map((task) => toTaskItem(task, userId, access.adminFamilyIds))
+  return tasks
+    .flatMap((task) => expandTask(task, from, to, userId, access.adminFamilyIds))
+    .sort((left, right) => left.date.localeCompare(right.date) || left.time.localeCompare(right.time) || left.title.localeCompare(right.title))
 }
 
 export async function getTask(userId: string, taskId: string) {
@@ -97,6 +117,7 @@ export async function createTask(userId: string, input: TaskInput) {
       reminderEnabled: input.reminderEnabled,
       reminderMinutes: input.reminderEnabled ? input.reminderMinutes ?? null : null,
       visibility: input.visibility,
+      recurrence: input.recurrence,
       createdById: userId,
       familyId,
     },

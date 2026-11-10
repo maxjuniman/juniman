@@ -37,8 +37,7 @@ export function DateTimeField({ label, mode, value, onChange, error }: Props) {
             mode={mode}
             display="spinner"
             is24Hour
-            onChange={(_event, selected) => {
-              if (!selected) return
+            onValueChange={(_event, selected) => {
               onChange(mode === 'date' ? formatDateInput(selected) : formatTimeInput(selected))
             }}
           />
@@ -50,11 +49,11 @@ export function DateTimeField({ label, mode, value, onChange, error }: Props) {
           value={current}
           mode={mode}
           is24Hour
-          onChange={(_event, selected) => {
+          onValueChange={(_event, selected) => {
             setOpen(false)
-            if (!selected) return
             onChange(mode === 'date' ? formatDateInput(selected) : formatTimeInput(selected))
           }}
+          onDismiss={() => setOpen(false)}
         />
       ) : null}
     </View>

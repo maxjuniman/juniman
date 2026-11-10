@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { formatDateInput, sameDay, weekDays } from '../lib/dates'
 import type { TaskItem } from '../shared'
 import { useTheme } from '../theme/ThemeProvider'
@@ -17,7 +17,7 @@ export function WeekCalendar({ selected, tasks, onSelect, onOpenTask }: Props) {
   const days = weekDays(selected)
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
+    <View style={styles.row}>
       {days.map((day) => {
         const active = sameDay(day, selected)
         const items = tasks.filter((task) => task.date === formatDateInput(day))
@@ -33,44 +33,47 @@ export function WeekCalendar({ selected, tasks, onSelect, onOpenTask }: Props) {
               },
             ]}
           >
-            <Text style={{ color: palette.muted, fontFamily: fonts.bold, fontSize: 12, textTransform: 'capitalize' }}>
-              {format(day, 'EEE', { locale: ptBR })}
+            <Text
+              numberOfLines={1}
+              style={{ color: palette.muted, fontFamily: fonts.bold, fontSize: 10, textAlign: 'center', textTransform: 'capitalize' }}
+            >
+              {format(day, 'EEE', { locale: ptBR }).replace('.', '')}
             </Text>
-            <Text style={{ color: active ? palette.primaryDark : palette.text, fontFamily: fonts.extra, fontSize: 18 }}>
+            <Text style={{ color: active ? palette.primaryDark : palette.text, fontFamily: fonts.extra, fontSize: 16, textAlign: 'center' }}>
               {format(day, 'd')}
             </Text>
             <View style={styles.tasks}>
-              {items.slice(0, 4).map((task) => {
+              {items.slice(0, 3).map((task) => {
                 const family = task.visibility === 'FAMILY'
                 return (
                   <Pressable
-                    key={task.id}
+                    key={`${task.id}-${task.date}`}
                     onPress={() => onOpenTask(task)}
-                    style={[styles.chip, { backgroundColor: family ? palette.familySoft : palette.surface }]}
+                    style={[styles.chip, { backgroundColor: family ? palette.familySoft : palette.personalSoft }]}
                   >
-                    <Text style={{ color: family ? palette.family : palette.personal, fontFamily: fonts.bold, fontSize: 11 }}>
+                    <Text numberOfLines={1} style={{ color: family ? palette.family : palette.personal, fontFamily: fonts.bold, fontSize: 9 }}>
                       {task.time}
                     </Text>
-                    <Text numberOfLines={2} style={{ color: palette.text, fontFamily: fonts.semibold, fontSize: 12 }}>
+                    <Text numberOfLines={2} style={{ color: palette.text, fontFamily: fonts.semibold, fontSize: 10, lineHeight: 12 }}>
                       {task.title}
                     </Text>
                   </Pressable>
                 )
               })}
-              {items.length > 4 ? (
-                <Text style={{ color: palette.muted, fontFamily: fonts.bold, fontSize: 11 }}>+{items.length - 4}</Text>
+              {items.length > 3 ? (
+                <Text style={{ color: palette.muted, fontFamily: fonts.bold, fontSize: 10, textAlign: 'center' }}>+{items.length - 3}</Text>
               ) : null}
             </View>
           </Pressable>
         )
       })}
-    </ScrollView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
-  row: { gap: 8, paddingHorizontal: 20 },
-  column: { width: 118, borderRadius: 18, borderWidth: 1, padding: 10, gap: 6, minHeight: 180 },
-  tasks: { gap: 6 },
-  chip: { borderRadius: 12, paddingHorizontal: 8, paddingVertical: 6, gap: 2 },
+  row: { flexDirection: 'row', gap: 4, paddingHorizontal: 12 },
+  column: { flex: 1, minWidth: 0, borderRadius: 14, borderWidth: 1, paddingVertical: 8, paddingHorizontal: 3, gap: 4, minHeight: 148 },
+  tasks: { gap: 4 },
+  chip: { borderRadius: 8, paddingHorizontal: 3, paddingVertical: 4, gap: 1 },
 })

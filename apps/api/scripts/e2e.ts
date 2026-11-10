@@ -106,6 +106,42 @@ async function main() {
     assert.equal(personal.date, '2026-12-15')
     assert.equal(personal.startsAt, '2026-12-15T18:00:00.000Z')
     assert.equal(personal.canDelete, true)
+    assert.equal(personal.recurrence, 'NONE')
+
+    const weekly = await request('/api/tasks', {
+      method: 'POST',
+      token: refreshed.accessToken,
+      expected: 201,
+      body: {
+        title: 'Futebol',
+        date: '2026-12-15',
+        time: '18:30',
+        reminderEnabled: false,
+        visibility: 'PERSONAL',
+        recurrence: 'WEEKLY',
+      },
+    })
+    assert.equal(weekly.recurrence, 'WEEKLY')
+    const nextTuesday = await request('/api/tasks?from=2026-12-22&to=2026-12-22', {
+      token: refreshed.accessToken,
+      expected: 200,
+    })
+    assert.equal(nextTuesday.length, 1)
+    assert.equal(nextTuesday[0].id, weekly.id)
+    assert.equal(nextTuesday[0].title, 'Futebol')
+    assert.equal(nextTuesday[0].date, '2026-12-22')
+    assert.equal(nextTuesday[0].time, '18:30')
+    assert.equal(nextTuesday[0].startsAt, '2026-12-22T21:30:00.000Z')
+    const wednesday = await request('/api/tasks?from=2026-12-16&to=2026-12-16', {
+      token: refreshed.accessToken,
+      expected: 200,
+    })
+    assert.equal(wednesday.some((task: { title: string }) => task.title === 'Futebol'), false)
+    const beforeAnchor = await request('/api/tasks?from=2026-12-08&to=2026-12-08', {
+      token: refreshed.accessToken,
+      expected: 200,
+    })
+    assert.equal(beforeAnchor.some((task: { title: string }) => task.title === 'Futebol'), false)
 
     const familyTask = await request('/api/tasks', {
       method: 'POST',
