@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum FamilyRole {
+  ADMIN
+  MEMBER
+}
+
+enum TaskVisibility {
+  PERSONAL
+  FAMILY
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  photo     String?
+  gender    Gender
+  timezone  String   @default("America/Sao_Paulo")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  memberships          FamilyMember[]
+  tasks                Task[]                     @relation("TaskCreator")
+  notificationSettings TaskNotificationSetting[]
+  pushTokens           PushToken[]
+  passwordResets       PasswordReset[]
+  refreshTokens        RefreshToken[]
+
+  @@map("users")
+}
+
+model Family {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  members FamilyMember[]
+  tasks   Task[]
+
+  @@map("families")
+}
+
+model FamilyMember {
+  id       String     @id @default(cuid())
+  familyId String     @map("family_id")
+  userId   String     @map("user_id")
+  role     FamilyRole @default(MEMBER)
+  joinedAt DateTime   @default(now()) @map("joined_at")
+
+  family Family @relation(fields: [familyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([familyId, userId])
+  @@index([userId])
+  @@map("family_members")
+}
+
+model Task {
+  id              String         @id @default(cuid())
+  title           String
+  date            DateTime       @db.Date
+  time            String
+  startsAt        DateTime       @map("starts_at")
+  timezone        String
+  reminderEnabled Boolean        @default(false) @map("reminder_enabled")
+  reminderMinutes Int?           @map("reminder_minutes")
+  visibility      TaskVisibility
+  createdById     String         @map("created_by")
+  familyId        String?        @map("family_id")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  createdBy            User                      @relation("TaskCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  family               Family?                   @relation(fields: [familyId], references: [id], onDelete: Restrict)
+  notificationSettings TaskNotificationSetting[]
+  dispatches           NotificationDispatch[]
+
+  @@index([createdById, date])
+  @@index([familyId, date])
+  @@index([startsAt])
+  @@map("tasks")
+}
+
+model TaskNotificationSetting {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  userId    String   @map("user_id")
+  muted     Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@map("task_notification_settings")
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  deviceId  String?  @map("device_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_tokens")
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  codeHash  String    @map("code_hash")
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_resets")
+}
+
+model RefreshToken {
+  id        String    @id
+  userId    String    @map("user_id")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model NotificationDispatch {
+  id       String   @id @default(cuid())
+  taskId   String   @map("task_id")
+  userId   String   @map("user_id")
+  remindAt DateTime @map("remind_at")
+  sentAt   DateTime @default(now()) @map("sent_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId, remindAt])
+  @@index([userId])
+  @@map("notification_dispatches")
+}

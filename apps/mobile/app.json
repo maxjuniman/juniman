@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Juniman's",
+    "slug": "junimans",
+    "scheme": "junimans",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-splash-screen",
+      "expo-image",
+      "expo-font",
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "color": "#5C8FBF"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Juniman's usa suas fotos para a foto de perfil."
+        }
+      ]
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.junimans.calendar"
+    },
+    "android": {
+      "package": "com.junimans.calendar",
+      "adaptiveIcon": {
+        "backgroundColor": "#F4F7FB",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["POST_NOTIFICATIONS", "RECEIVE_BOOT_COMPLETED", "VIBRATE"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "ae722390-b832-47d9-a1b0-0c64ebcab254"
+      }
+    }
+  }
+}

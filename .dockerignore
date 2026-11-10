@@ -1,0 +1,10 @@
+**/.git
+**/node_modules
+**/.expo
+**/.env
+**/uploads
+**/*.log
+dist
+dist-android
+dist-web
+apps/mobile
