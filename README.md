@@ -2,8 +2,6 @@
 
 Calendário familiar com aplicativo Expo e API Node.js. As tarefas ficam no PostgreSQL e o tema do aplicativo acompanha o sexo informado no cadastro: azul para masculino e rosa para feminino.
 
-A imagem `apps/mobile/assets/brasao.jpg` é um brasão provisório. Substitua esse arquivo pelo brasão da família.
-
 ## Como executar
 
 Requisitos: Node.js 22.
@@ -15,27 +13,6 @@ npm run mobile
 ```
 
 O comando `setup` instala as dependências e aplica as migrations. A API de desenvolvimento sobe um PostgreSQL local em `127.0.0.1:5433`, com os dados em `%USERPROFILE%\.junimans\pgdata`. Para usar um PostgreSQL próprio, ajuste `apps/api/.env`:
-
-```env
-EMBEDDED_POSTGRES=false
-DATABASE_URL=postgresql://usuario:senha@localhost:5432/junimans?schema=public
-```
-
-No celular físico, crie `apps/mobile/.env`. A API publicada na VPS responde em:
-
-```env
-EXPO_PUBLIC_API_URL=http://167.233.239.13:3340
-```
-
-O projeto EAS `ae722390-b832-47d9-a1b0-0c64ebcab254` já está em `apps/mobile/app.json`. Ele é usado para obter o Expo Push Token.
-
-O `EXPO_PUBLIC_PROJECT_ID` é necessário para a Expo Push API avisar os outros membros com o aplicativo fechado. Sem ele, os alarmes pessoais continuam sendo agendados no próprio aparelho.
-
-## Produção na VPS
-
-O PostgreSQL do Juniman's roda em um container próprio na VPS `167.233.239.13`, sem porta pública. A API publica somente a porta `3340`. Os outros sites do servidor, como o Maxfoot, não usam esse banco.
-
-O arquivo `apps/api/.env` da VPS fica apenas no servidor. `EMBEDDED_POSTGRES=false` faz a API usar o PostgreSQL do container.
 
 ## Rotas da API
 
