@@ -77,9 +77,3 @@ export function sameDay(left: Date, right: Date) {
 export function weekdayOfDate(date: string) {
   return parseDateInput(date).getDay()
 }
-
-export function alignDateToWeekday(date: string, weekday: number) {
-  const current = parseDateInput(date)
-  const delta = (weekday - current.getDay() + 7) % 7
-  return formatDateInput(addDays(current, delta))
-}

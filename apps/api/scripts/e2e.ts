@@ -119,9 +119,11 @@ async function main() {
         reminderEnabled: false,
         visibility: 'PERSONAL',
         recurrence: 'WEEKLY',
+        weekdays: [2, 4],
       },
     })
     assert.equal(weekly.recurrence, 'WEEKLY')
+    assert.deepEqual(weekly.weekdays, [2, 4])
     const nextTuesday = await request('/api/tasks?from=2026-12-22&to=2026-12-22', {
       token: refreshed.accessToken,
       expected: 200,
@@ -132,6 +134,16 @@ async function main() {
     assert.equal(nextTuesday[0].date, '2026-12-22')
     assert.equal(nextTuesday[0].time, '18:30')
     assert.equal(nextTuesday[0].startsAt, '2026-12-22T21:30:00.000Z')
+    const thursday = await request('/api/tasks?from=2026-12-17&to=2026-12-17', {
+      token: refreshed.accessToken,
+      expected: 200,
+    })
+    assert.equal(thursday.length, 1)
+    assert.equal(thursday[0].id, weekly.id)
+    assert.equal(thursday[0].title, 'Futebol')
+    assert.equal(thursday[0].date, '2026-12-17')
+    assert.equal(thursday[0].time, '18:30')
+    assert.equal(thursday[0].startsAt, '2026-12-17T21:30:00.000Z')
     const wednesday = await request('/api/tasks?from=2026-12-16&to=2026-12-16', {
       token: refreshed.accessToken,
       expected: 200,

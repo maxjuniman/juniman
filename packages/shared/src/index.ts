@@ -103,6 +103,7 @@ export const taskSchema = z
       invalid_type_error: 'Escolha com quem compartilhar.',
     }),
     recurrence: z.enum(RECURRENCES).default('NONE'),
+    weekdays: z.array(z.number().int().min(0).max(6)).max(7).default([]),
   })
   .superRefine((value, context) => {
     const [year, month, day] = value.date.split('-').map(Number)
@@ -128,6 +129,14 @@ export const taskSchema = z
         code: z.ZodIssueCode.custom,
         path: ['reminderMinutes'],
         message: 'Escolha quando o alarme deve tocar.',
+      })
+    }
+
+    if (value.recurrence === 'WEEKLY' && normalizeWeekdays(value.weekdays).length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['weekdays'],
+        message: 'Escolha pelo menos um dia da semana.',
       })
     }
   })
@@ -189,6 +198,7 @@ export type TaskItem = {
   reminderMinutes: number | null
   visibility: TaskVisibility
   recurrence: Recurrence
+  weekdays: number[]
   familyId: string | null
   muted: boolean
   canDelete: boolean
@@ -234,12 +244,26 @@ export type ApiErrorBody = {
   }
 }
 
-export function recurrenceLabel(date: string) {
-  const weekday = new Date(`${date}T00:00:00.000Z`).getUTCDay()
-  const match = WEEKDAY_OPTIONS.find((item) => item.weekday === weekday)
-  if (!match) return 'Toda semana'
-  const article = weekday === 0 || weekday === 6 ? 'Todo' : 'Toda'
-  return `${article} ${match.name}`
+export function normalizeWeekdays(weekdays: number[]) {
+  return [...new Set(weekdays.filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))].sort((left, right) => {
+    const order = (day: number) => (day === 0 ? 7 : day)
+    return order(left) - order(right)
+  })
+}
+
+export function recurrenceLabel(weekdays: number[]) {
+  const ordered = normalizeWeekdays(weekdays)
+  const names = ordered.flatMap((weekday) => {
+    const match = WEEKDAY_OPTIONS.find((item) => item.weekday === weekday)
+    return match ? [match.name] : []
+  })
+  if (names.length === 0) return 'Toda semana'
+  if (names.length === 1) {
+    const article = ordered[0] === 0 || ordered[0] === 6 ? 'Todo' : 'Toda'
+    return `${article} ${names[0]}`
+  }
+  const listed = names.length === 2 ? names.join(' e ') : `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`
+  return listed.charAt(0).toUpperCase() + listed.slice(1)
 }
 
 export function reminderLabel(minutes: number) {

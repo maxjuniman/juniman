@@ -101,7 +101,7 @@ export async function dispatchDueNotifications() {
   for (const task of weeklyTasks) {
     if (task.reminderMinutes == null) continue
     const anchor = formatDateOnly(task.date)
-    for (const day of weeklyDates(anchor, windowFrom, windowTo)) {
+    for (const day of weeklyDates(anchor, task.weekdays, windowFrom, windowTo)) {
       const startsAt = toUtcDate(day, task.time, task.timezone)
       const remindAt = new Date(startsAt.getTime() - task.reminderMinutes * 60_000)
       if (remindAt > now || remindAt < lookback) continue

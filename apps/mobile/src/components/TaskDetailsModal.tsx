@@ -73,7 +73,7 @@ export function TaskDetailsModal({ task, onClose, onChanged }: Props) {
           <Text style={{ color: palette.text, fontFamily: fonts.extra, fontSize: 24 }}>{task.title}</Text>
           <Info label="Data" value={formatLongDate(parseDateInput(task.date))} />
           <Info label="Horário" value={task.time} />
-          {weekly ? <Info label="Repetição" value={recurrenceLabel(task.date)} /> : null}
+          {weekly ? <Info label="Repetição" value={recurrenceLabel(task.weekdays)} /> : null}
           <Info label="Tipo" value={family ? 'Familiar' : 'Pessoal'} />
           <Info label="Criada por" value={task.createdBy.name} />
           <Info label="Notificação" value={reminder} />

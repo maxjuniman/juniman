@@ -32,7 +32,7 @@ export function TaskCard({ task, currentUserId, onPress }: Props) {
         </Text>
         <Text style={{ color: palette.muted, fontFamily: fonts.semibold, fontSize: 12 }}>
           {family ? 'Família' : 'Pessoal'}
-          {task.recurrence === 'WEEKLY' ? ` · ${recurrenceLabel(task.date)}` : ''}
+          {task.recurrence === 'WEEKLY' ? ` · ${recurrenceLabel(task.weekdays)}` : ''}
           {owner ? ` · ${owner}` : ''}
         </Text>
       </View>

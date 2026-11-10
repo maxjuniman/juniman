@@ -2,10 +2,10 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native'
-import { alignDateToWeekday, formatDateInput, weekdayOfDate } from '../lib/dates'
+import { formatDateInput, weekdayOfDate } from '../lib/dates'
 import { ApiError } from '../services/api'
 import { createTask } from '../services/tasks'
-import { REMINDER_OPTIONS, WEEKDAY_OPTIONS, recurrenceLabel, taskSchema, type TaskFormValues } from '../shared'
+import { REMINDER_OPTIONS, WEEKDAY_OPTIONS, normalizeWeekdays, recurrenceLabel, taskSchema, type TaskFormValues } from '../shared'
 import { useTheme } from '../theme/ThemeProvider'
 import { Button } from './Button'
 import { DateTimeField } from './DateTimeField'
@@ -33,6 +33,7 @@ export function TaskFormModal({ visible, selectedDate, onClose, onCreated }: Pro
       reminderMinutes: 30,
       visibility: 'PERSONAL',
       recurrence: 'NONE',
+      weekdays: [],
     },
   })
 
@@ -47,6 +48,7 @@ export function TaskFormModal({ visible, selectedDate, onClose, onCreated }: Pro
       reminderMinutes: 30,
       visibility: 'PERSONAL',
       recurrence: 'NONE',
+      weekdays: [],
     })
     // O reset acompanha apenas a abertura e a data escolhida no calendário.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -55,9 +57,14 @@ export function TaskFormModal({ visible, selectedDate, onClose, onCreated }: Pro
   const reminderEnabled = form.watch('reminderEnabled')
   const reminderMinutes = form.watch('reminderMinutes')
   const recurrence = form.watch('recurrence')
-  const date = form.watch('date')
   const time = form.watch('time')
+  const weekdays = normalizeWeekdays(form.watch('weekdays') ?? [])
   const weekly = recurrence === 'WEEKLY'
+
+  const toggleWeekday = (weekday: number) => {
+    const next = weekdays.includes(weekday) ? weekdays.filter((day) => day !== weekday) : [...weekdays, weekday]
+    form.setValue('weekdays', next, { shouldValidate: true })
+  }
 
   const submit = form.handleSubmit(async (values) => {
     setFormError(null)
@@ -65,6 +72,7 @@ export function TaskFormModal({ visible, selectedDate, onClose, onCreated }: Pro
       await createTask({
         ...values,
         recurrence: values.recurrence ?? 'NONE',
+        weekdays: values.recurrence === 'WEEKLY' ? normalizeWeekdays(values.weekdays ?? []) : [],
         reminderMinutes: values.reminderEnabled ? values.reminderMinutes ?? null : null,
       })
       onCreated()
@@ -110,11 +118,16 @@ export function TaskFormModal({ visible, selectedDate, onClose, onCreated }: Pro
       <View style={[styles.alarm, { backgroundColor: palette.surface, borderColor: palette.border }]}>
         <View style={styles.alarmCopy}>
           <Text style={{ color: palette.text, fontFamily: fonts.bold, fontSize: 15 }}>Repetir</Text>
-          <Text style={{ color: palette.muted, fontFamily: fonts.regular, fontSize: 13 }}>Toda semana, no mesmo dia e horário</Text>
+          <Text style={{ color: palette.muted, fontFamily: fonts.regular, fontSize: 13 }}>Um ou mais dias, toda semana</Text>
         </View>
         <Switch
           value={weekly}
-          onValueChange={(value) => form.setValue('recurrence', value ? 'WEEKLY' : 'NONE', { shouldValidate: true })}
+          onValueChange={(value) => {
+            form.setValue('recurrence', value ? 'WEEKLY' : 'NONE', { shouldValidate: true })
+            if (value && weekdays.length === 0) {
+              form.setValue('weekdays', [weekdayOfDate(form.getValues('date'))], { shouldValidate: true })
+            }
+          }}
           trackColor={{ true: palette.primary, false: palette.border }}
           thumbColor="#FFFFFF"
         />
@@ -122,11 +135,11 @@ export function TaskFormModal({ visible, selectedDate, onClose, onCreated }: Pro
       {weekly ? (
         <View style={styles.options}>
           {WEEKDAY_OPTIONS.map((option) => {
-            const selected = weekdayOfDate(date) === option.weekday
+            const selected = weekdays.includes(option.weekday)
             return (
               <Pressable
                 key={option.weekday}
-                onPress={() => form.setValue('date', alignDateToWeekday(date, option.weekday), { shouldValidate: true })}
+                onPress={() => toggleWeekday(option.weekday)}
                 style={[styles.chip, { backgroundColor: selected ? palette.primary : palette.primarySoft }]}
               >
                 <Text style={{ color: selected ? palette.onPrimary : palette.primaryDark, fontFamily: fonts.bold, fontSize: 13 }}>
@@ -137,9 +150,12 @@ export function TaskFormModal({ visible, selectedDate, onClose, onCreated }: Pro
           })}
         </View>
       ) : null}
-      {weekly ? (
+      {form.formState.errors.weekdays?.message ? (
+        <Text style={{ color: palette.danger, fontFamily: fonts.semibold }}>{form.formState.errors.weekdays.message}</Text>
+      ) : null}
+      {weekly && weekdays.length > 0 ? (
         <Text style={{ color: palette.primaryDark, fontFamily: fonts.bold, fontSize: 14 }}>
-          {recurrenceLabel(date)} às {time}
+          {recurrenceLabel(weekdays)} às {time}
         </Text>
       ) : null}
       <View style={[styles.alarm, { backgroundColor: palette.surface, borderColor: palette.border }]}>

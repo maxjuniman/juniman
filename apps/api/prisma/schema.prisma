@@ -85,6 +85,7 @@ model Task {
   reminderMinutes Int?           @map("reminder_minutes")
   visibility      TaskVisibility
   recurrence      Recurrence     @default(NONE)
+  weekdays        Int[]          @default([])
   createdById     String         @map("created_by")
   familyId        String?        @map("family_id")
   createdAt       DateTime       @default(now()) @map("created_at")

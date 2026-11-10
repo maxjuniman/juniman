@@ -19,9 +19,9 @@ export function weekdayOf(date: string) {
   return dateOnly(date).getUTCDay()
 }
 
-export function weeklyDates(anchor: string, from: string, to: string) {
+export function weeklyDates(anchor: string, weekdays: number[], from: string, to: string) {
   const start = from > anchor ? from : anchor
   if (start > to) return []
-  const weekday = weekdayOf(anchor)
-  return eachDate(start, to).filter((day) => weekdayOf(day) === weekday)
+  const allowed = new Set(weekdays.length > 0 ? weekdays : [weekdayOf(anchor)])
+  return eachDate(start, to).filter((day) => allowed.has(weekdayOf(day)))
 }

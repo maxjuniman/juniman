@@ -3,7 +3,7 @@ import { dateOnly, formatDateOnly, toUtcDate } from '../../lib/dates'
 import { weeklyDates } from '../../lib/recurrence'
 import { AppError } from '../../lib/errors'
 import { prisma } from '../../lib/prisma'
-import type { TaskInput, TaskItem } from '../../shared'
+import { normalizeWeekdays, type TaskInput, type TaskItem } from '../../shared'
 import { getFamilyAccess } from '../families/family-context'
 
 const taskInclude = {
@@ -39,6 +39,7 @@ function toTaskItem(task: TaskWithCreator, userId: string, adminFamilyIds: Set<s
     reminderMinutes: task.reminderMinutes,
     visibility: task.visibility,
     recurrence: task.recurrence,
+    weekdays: task.weekdays,
     familyId: task.familyId,
     muted: task.notificationSettings?.[0]?.muted ?? false,
     canDelete: canDeleteTask(task, userId, adminFamilyIds),
@@ -58,7 +59,8 @@ function visibleWhere(userId: string, familyIds: string[]) {
 function expandTask(task: TaskWithCreator, from: string, to: string, userId: string, adminFamilyIds: Set<string>): TaskItem[] {
   const base = toTaskItem(task, userId, adminFamilyIds)
   if (task.recurrence !== 'WEEKLY') return [base]
-  return weeklyDates(formatDateOnly(task.date), from, to).map((day) => ({
+  const anchor = formatDateOnly(task.date)
+  return weeklyDates(anchor, task.weekdays, from, to).map((day) => ({
     ...base,
     date: day,
     startsAt: toUtcDate(day, task.time, task.timezone).toISOString(),
@@ -118,6 +120,7 @@ export async function createTask(userId: string, input: TaskInput) {
       reminderMinutes: input.reminderEnabled ? input.reminderMinutes ?? null : null,
       visibility: input.visibility,
       recurrence: input.recurrence,
+      weekdays: input.recurrence === 'WEEKLY' ? normalizeWeekdays(input.weekdays) : [],
       createdById: userId,
       familyId,
     },
