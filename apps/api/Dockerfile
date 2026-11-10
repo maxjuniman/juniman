@@ -9,9 +9,9 @@ WORKDIR /app
 COPY packages/shared/package.json packages/shared/package-lock.json packages/shared/
 COPY apps/api/package.json apps/api/package-lock.json apps/api/
 
-RUN npm install --omit=dev --prefix packages/shared \
-  && npm install --omit=dev --prefix apps/api \
-  && npm install --prefix apps/api prisma tsx
+RUN npm install --omit=dev --ignore-scripts --prefix packages/shared \
+  && npm install --omit=dev --ignore-scripts --prefix apps/api \
+  && npm install --ignore-scripts --prefix apps/api prisma tsx
 
 COPY packages/shared packages/shared
 COPY apps/api/prisma apps/api/prisma
