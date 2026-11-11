@@ -5,6 +5,8 @@
     "setup": "npm install --prefix packages/shared && npm install --prefix apps/api && npm install --prefix apps/mobile && npm run db:migrate --prefix apps/api",
     "api": "npm run dev --prefix apps/api",
     "mobile": "npm start --prefix apps/mobile",
+    "doctor": "npm run doctor --prefix apps/mobile",
+    "expo:update": "npm run update:check --prefix apps/mobile",
     "db:migrate": "npm run db:migrate --prefix apps/api",
     "test:api": "npm run test:e2e --prefix apps/api",
     "typecheck": "npm run typecheck --prefix apps/api && npm run typecheck --prefix apps/mobile"

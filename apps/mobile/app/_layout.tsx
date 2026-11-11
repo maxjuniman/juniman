@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler'
 import {
   Nunito_400Regular,
   Nunito_600SemiBold,
