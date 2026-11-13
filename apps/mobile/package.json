@@ -45,8 +45,8 @@
     "typecheck": "tsc --noEmit",
     "doctor": "expo-doctor",
     "update:check": "expo install --check",
-    "update": "npx eas-cli update",
-    "build:apk": "npx eas-cli build --platform android --profile preview"
+    "update": "eas update",
+    "build:apk": "eas build --platform android --profile preview"
   },
   "private": true
 }
