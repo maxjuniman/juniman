@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native'
 import { formatLongDate, parseDateInput } from '../lib/dates'
 import { ApiError } from '../services/api'
 import { deleteTask, muteTask } from '../services/tasks'
-import { recurrenceLabel, reminderLabel, type TaskItem } from '../shared'
+import { assigneeOption, recurrenceLabel, reminderLabel, type TaskItem } from '../shared'
 import { useTheme } from '../theme/ThemeProvider'
 import { Button } from './Button'
 import { ModalSheet } from './ModalSheet'
@@ -12,9 +12,10 @@ type Props = {
   task: TaskItem | null
   onClose: () => void
   onChanged: () => void
+  onEdit: (task: TaskItem) => void
 }
 
-export function TaskDetailsModal({ task, onClose, onChanged }: Props) {
+export function TaskDetailsModal({ task, onClose, onChanged, onEdit }: Props) {
   const { palette, fonts } = useTheme()
   const [confirming, setConfirming] = useState(false)
   const [loading, setLoading] = useState<'mute' | 'delete' | null>(null)
@@ -74,7 +75,7 @@ export function TaskDetailsModal({ task, onClose, onChanged }: Props) {
           <Info label="Data" value={formatLongDate(parseDateInput(task.date))} />
           <Info label="Horário" value={task.time} />
           {weekly ? <Info label="Repetição" value={recurrenceLabel(task.weekdays)} /> : null}
-          <Info label="Tipo" value={family ? 'Familiar' : 'Pessoal'} />
+          <Info label="Para" value={assigneeOption(task.assignee).label} />
           <Info label="Criada por" value={task.createdBy.name} />
           <Info label="Notificação" value={reminder} />
           {error ? <Text style={{ color: palette.danger, fontFamily: fonts.semibold }}>{error}</Text> : null}
@@ -84,8 +85,9 @@ export function TaskDetailsModal({ task, onClose, onChanged }: Props) {
             onPress={toggleMute}
             loading={loading === 'mute'}
           />
+          {task.canEdit ? <Button title="Editar lembrete" variant="secondary" onPress={() => onEdit(task)} /> : null}
           {task.canDelete ? (
-            <Button title="Excluir tarefa" variant="danger" onPress={() => setConfirming(true)} />
+            <Button title="Excluir lembrete" variant="danger" onPress={() => setConfirming(true)} />
           ) : (
             <Text style={{ color: palette.muted, fontFamily: fonts.regular, lineHeight: 20 }}>
               Somente quem criou a tarefa ou administra a família pode excluí-la.

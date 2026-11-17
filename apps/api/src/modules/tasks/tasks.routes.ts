@@ -40,6 +40,16 @@ tasksRouter.get(
   }),
 )
 
+tasksRouter.patch(
+  '/:id',
+  asyncHandler(async (request, response) => {
+    const { userId } = request as AuthedRequest
+    const params = idSchema.parse(request.params)
+    const input = taskSchema.parse(request.body)
+    response.json(await tasksService.updateTask(userId, params.id, input))
+  }),
+)
+
 tasksRouter.delete(
   '/:id',
   asyncHandler(async (request, response) => {

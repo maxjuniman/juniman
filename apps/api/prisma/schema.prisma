@@ -27,6 +27,14 @@ enum Recurrence {
   WEEKLY
 }
 
+enum TaskAssignee {
+  HENRIQUE
+  MAMAE
+  MIGUEL
+  PAPAI
+  FAMILY
+}
+
 model User {
   id        String   @id @default(cuid())
   name      String
@@ -84,6 +92,7 @@ model Task {
   reminderEnabled Boolean        @default(false) @map("reminder_enabled")
   reminderMinutes Int?           @map("reminder_minutes")
   visibility      TaskVisibility
+  assignee        TaskAssignee   @default(FAMILY)
   recurrence      Recurrence     @default(NONE)
   weekdays        Int[]          @default([])
   createdById     String         @map("created_by")

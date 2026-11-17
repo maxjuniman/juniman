@@ -1,7 +1,7 @@
 import { formatDateOnly, toUtcDate } from '../../lib/dates'
 import { weeklyDates } from '../../lib/recurrence'
 import { prisma } from '../../lib/prisma'
-import { reminderLabel } from '../../shared'
+import { assigneeOption, reminderLabel } from '../../shared'
 import { sendExpoPush } from './expo-push'
 
 const LOOKBACK_MS = 10 * 60 * 1000
@@ -12,6 +12,7 @@ type DueTask = {
   id: string
   title: string
   time: string
+  assignee: string
   reminderMinutes: number | null
   notificationSettings: { userId: string; muted: boolean }[]
   family: { members: { userId: string }[] } | null
@@ -39,7 +40,7 @@ async function notifyMembers(task: DueTask, remindAt: Date) {
       tokens.map((item) => item.token),
       {
         title: "Juniman's",
-        body: `${reminderLabel(task.reminderMinutes)}: ${task.title} às ${task.time}`,
+        body: `${assigneeOption(task.assignee).label} · ${reminderLabel(task.reminderMinutes)}: ${task.title} às ${task.time}`,
         data: { taskId: task.id },
       },
     )

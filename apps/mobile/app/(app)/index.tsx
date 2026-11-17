@@ -14,7 +14,7 @@ import { TaskFormModal } from '../../src/components/TaskFormModal'
 import { WeekCalendar } from '../../src/components/WeekCalendar'
 import { useTasks } from '../../src/hooks/useTasks'
 import { formatMonth, formatWeekRange } from '../../src/lib/dates'
-import type { TaskItem } from '../../src/shared'
+import { TASK_ASSIGNEE_OPTIONS, type TaskItem } from '../../src/shared'
 import { useAuthStore } from '../../src/stores/auth-store'
 import { useTheme } from '../../src/theme/ThemeProvider'
 
@@ -27,6 +27,7 @@ export default function HomeScreen() {
   const [monthCursor, setMonthCursor] = useState(() => new Date())
   const [formOpen, setFormOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<TaskItem | null>(null)
+  const [editingTask, setEditingTask] = useState<TaskItem | null>(null)
   const { tasks, loading, refreshing, error, reload } = useTasks(monthOpen ? monthCursor : selectedDate)
 
   const shift = (direction: -1 | 1) => {
@@ -76,8 +77,9 @@ export default function HomeScreen() {
           </Pressable>
         </View>
         <View style={styles.legend}>
-          <Legend color={palette.personal} label="Pessoal" />
-          <Legend color={palette.family} label="Família" />
+          {TASK_ASSIGNEE_OPTIONS.map((item) => (
+            <Legend key={item.value} color={item.color} label={item.label} />
+          ))}
           <Pressable onPress={() => setSelectedDate(new Date())}>
             <Text style={{ color: palette.primaryDark, fontFamily: fonts.bold }}>Hoje</Text>
           </Pressable>
@@ -85,13 +87,31 @@ export default function HomeScreen() {
         {error ? <Text style={[styles.error, { color: palette.danger, fontFamily: fonts.semibold }]}>{error}</Text> : null}
         {loading && tasks.length === 0 ? <ActivityIndicator color={palette.primary} style={styles.loader} /> : null}
         {mode === 'week' ? (
-          <WeekCalendar selected={selectedDate} tasks={tasks} onSelect={setSelectedDate} onOpenTask={setSelectedTask} />
+          <WeekCalendar selected={selectedDate} tasks={tasks} onSelect={setSelectedDate} />
         ) : null}
         <DayAgenda date={selectedDate} tasks={tasks} currentUserId={userId} onPressTask={setSelectedTask} />
       </ScrollView>
-      <FloatingButton onPress={() => setFormOpen(true)} />
-      <TaskFormModal visible={formOpen} selectedDate={selectedDate} onClose={() => setFormOpen(false)} onCreated={reload} />
-      <TaskDetailsModal task={selectedTask} onClose={() => setSelectedTask(null)} onChanged={reload} />
+      <FloatingButton onPress={() => { setEditingTask(null); setFormOpen(true) }} />
+      <TaskFormModal
+        visible={formOpen}
+        selectedDate={selectedDate}
+        task={editingTask}
+        onClose={() => {
+          setFormOpen(false)
+          setEditingTask(null)
+        }}
+        onSaved={reload}
+      />
+      <TaskDetailsModal
+        task={selectedTask}
+        onClose={() => setSelectedTask(null)}
+        onChanged={reload}
+        onEdit={(task) => {
+          setSelectedTask(null)
+          setEditingTask(task)
+          setFormOpen(true)
+        }}
+      />
       <ModalSheet visible={monthOpen} title="Calendário" onClose={() => setMonthOpen(false)}>
         <MonthPicker
           cursor={monthCursor}
@@ -127,7 +147,7 @@ const styles = StyleSheet.create({
   nav: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20 },
   arrow: { width: 42, height: 42, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   month: { flex: 1, alignItems: 'center', gap: 2 },
-  legend: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20 },
+  legend: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20 },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4 },
   error: { paddingHorizontal: 20 },

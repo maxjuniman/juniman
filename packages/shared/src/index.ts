@@ -4,6 +4,7 @@ export const GENDERS = ['MALE', 'FEMALE'] as const
 export const VISIBILITIES = ['PERSONAL', 'FAMILY'] as const
 export const FAMILY_ROLES = ['ADMIN', 'MEMBER'] as const
 export const RECURRENCES = ['NONE', 'WEEKLY'] as const
+export const TASK_ASSIGNEES = ['HENRIQUE', 'MAMAE', 'MIGUEL', 'PAPAI', 'FAMILY'] as const
 export const REMINDER_MINUTE_VALUES = [120, 60, 30, 10] as const
 
 export const WEEKDAY_OPTIONS = [
@@ -14,6 +15,14 @@ export const WEEKDAY_OPTIONS = [
   { weekday: 5, short: 'Sex', name: 'sexta-feira' },
   { weekday: 6, short: 'Sáb', name: 'sábado' },
   { weekday: 0, short: 'Dom', name: 'domingo' },
+] as const
+
+export const TASK_ASSIGNEE_OPTIONS = [
+  { value: 'HENRIQUE', label: 'Henrique', color: '#7EC8E8', soft: '#DDF3FB' },
+  { value: 'MAMAE', label: 'Mamãe', color: '#E8A0BF', soft: '#FBEAF1' },
+  { value: 'MIGUEL', label: 'Miguel', color: '#E8C84A', soft: '#FBF3D0' },
+  { value: 'PAPAI', label: 'Papai', color: '#1E4E8C', soft: '#D6E4F5' },
+  { value: 'FAMILY', label: 'Família toda', color: '#7B5EA7', soft: '#EDE6F6' },
 ] as const
 
 export const REMINDER_OPTIONS = [
@@ -27,6 +36,7 @@ export type Gender = (typeof GENDERS)[number]
 export type TaskVisibility = (typeof VISIBILITIES)[number]
 export type FamilyRole = (typeof FAMILY_ROLES)[number]
 export type Recurrence = (typeof RECURRENCES)[number]
+export type TaskAssignee = (typeof TASK_ASSIGNEES)[number]
 export type ReminderMinutes = (typeof REMINDER_MINUTE_VALUES)[number]
 
 const requiredText = (message: string) =>
@@ -102,6 +112,7 @@ export const taskSchema = z
       required_error: 'Escolha com quem compartilhar.',
       invalid_type_error: 'Escolha com quem compartilhar.',
     }),
+    assignee: z.enum(TASK_ASSIGNEES).default('FAMILY'),
     recurrence: z.enum(RECURRENCES).default('NONE'),
     weekdays: z.array(z.number().int().min(0).max(6)).max(7).default([]),
   })
@@ -197,11 +208,13 @@ export type TaskItem = {
   reminderEnabled: boolean
   reminderMinutes: number | null
   visibility: TaskVisibility
+  assignee: TaskAssignee
   recurrence: Recurrence
   weekdays: number[]
   familyId: string | null
   muted: boolean
   canDelete: boolean
+  canEdit: boolean
   createdBy: {
     id: string
     name: string
@@ -264,6 +277,10 @@ export function recurrenceLabel(weekdays: number[]) {
   }
   const listed = names.length === 2 ? names.join(' e ') : `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`
   return listed.charAt(0).toUpperCase() + listed.slice(1)
+}
+
+export function assigneeOption(assignee: TaskAssignee | string | null | undefined) {
+  return TASK_ASSIGNEE_OPTIONS.find((item) => item.value === assignee) ?? TASK_ASSIGNEE_OPTIONS[4]
 }
 
 export function reminderLabel(minutes: number) {

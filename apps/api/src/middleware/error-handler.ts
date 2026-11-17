@@ -35,6 +35,13 @@ export function errorHandler(error: unknown, _request: Request, response: Respon
     return
   }
 
+  if (error instanceof SyntaxError) {
+    response.status(400).json({
+      error: { code: 'INVALID_JSON', message: 'Não foi possível ler os dados enviados.' },
+    })
+    return
+  }
+
   if (error instanceof multer.MulterError) {
     response.status(400).json({
       error: { code: 'UPLOAD_ERROR', message: 'Não foi possível enviar a imagem.' },

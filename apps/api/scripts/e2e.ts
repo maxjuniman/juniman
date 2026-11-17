@@ -107,6 +107,8 @@ async function main() {
     assert.equal(personal.startsAt, '2026-12-15T18:00:00.000Z')
     assert.equal(personal.canDelete, true)
     assert.equal(personal.recurrence, 'NONE')
+    assert.equal(personal.assignee, 'FAMILY')
+    assert.equal(personal.canEdit, true)
 
     const weekly = await request('/api/tasks', {
       method: 'POST',
@@ -159,8 +161,34 @@ async function main() {
       method: 'POST',
       token: refreshed.accessToken,
       expected: 201,
-      body: { title: 'Jantar', date: '2026-12-15', time: '19:30', reminderEnabled: true, reminderMinutes: 60, visibility: 'FAMILY' },
+      body: {
+        title: 'Jantar',
+        date: '2026-12-15',
+        time: '19:30',
+        reminderEnabled: true,
+        reminderMinutes: 60,
+        visibility: 'FAMILY',
+        assignee: 'MAMAE',
+      },
     })
+    assert.equal(familyTask.assignee, 'MAMAE')
+    const edited = await request(`/api/tasks/${familyTask.id}`, {
+      method: 'PATCH',
+      token: refreshed.accessToken,
+      expected: 200,
+      body: {
+        title: 'Jantar em família',
+        date: '2026-12-15',
+        time: '20:00',
+        reminderEnabled: true,
+        reminderMinutes: 60,
+        visibility: 'FAMILY',
+        assignee: 'FAMILY',
+      },
+    })
+    assert.equal(edited.title, 'Jantar em família')
+    assert.equal(edited.time, '20:00')
+    assert.equal(edited.assignee, 'FAMILY')
 
     const brunoSession = (await request('/api/auth/register', { method: 'POST', body: bruno, expected: 201 })) as Session
     const brunoBefore = await request('/api/tasks?from=2026-12-01&to=2026-12-31', { token: brunoSession.accessToken, expected: 200 })
@@ -179,6 +207,20 @@ async function main() {
     assert.equal(brunoTasks[0].canDelete, false)
 
     await request(`/api/tasks/${familyTask.id}`, { method: 'DELETE', token: brunoSession.accessToken, expected: 403 })
+    await request(`/api/tasks/${familyTask.id}`, {
+      method: 'PATCH',
+      token: brunoSession.accessToken,
+      expected: 403,
+      body: {
+        title: 'Alterar jantar',
+        date: '2026-12-15',
+        time: '20:00',
+        reminderEnabled: true,
+        reminderMinutes: 60,
+        visibility: 'FAMILY',
+        assignee: 'FAMILY',
+      },
+    })
     const muted = await request(`/api/tasks/${familyTask.id}/mute`, {
       method: 'PATCH',
       token: brunoSession.accessToken,

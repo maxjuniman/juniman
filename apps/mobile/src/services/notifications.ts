@@ -2,7 +2,7 @@ import Constants from 'expo-constants'
 import * as Device from 'expo-device'
 import * as Notifications from 'expo-notifications'
 import { Platform } from 'react-native'
-import { reminderLabel, type TaskItem } from '../shared'
+import { assigneeOption, reminderLabel, type TaskItem } from '../shared'
 import { useAuthStore } from '../stores/auth-store'
 import { api } from './api'
 
@@ -108,7 +108,7 @@ export async function syncLocalNotifications(tasks: TaskItem[]) {
       identifier,
       content: {
         title: "Juniman's",
-        body: `${reminderLabel(entry.task.reminderMinutes ?? 0)}: ${entry.task.title} às ${entry.task.time}`,
+        body: `${assigneeOption(entry.task.assignee).label} · ${reminderLabel(entry.task.reminderMinutes ?? 0)}: ${entry.task.title} às ${entry.task.time}`,
         data: { taskId: entry.task.id },
         sound: 'default',
       },

@@ -1,0 +1,3 @@
+CREATE TYPE "TaskAssignee" AS ENUM ('HENRIQUE', 'MAMAE', 'MIGUEL', 'PAPAI', 'FAMILY');
+
+ALTER TABLE "tasks" ADD COLUMN "assignee" "TaskAssignee" NOT NULL DEFAULT 'FAMILY';

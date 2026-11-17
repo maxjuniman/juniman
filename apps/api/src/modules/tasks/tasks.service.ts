@@ -21,7 +21,7 @@ async function requireUser(userId: string) {
   return user
 }
 
-function canDeleteTask(task: Task, userId: string, adminFamilyIds: Set<string>) {
+function canManageTask(task: Task, userId: string, adminFamilyIds: Set<string>) {
   if (task.visibility === 'PERSONAL') return task.createdById === userId
   const isCreator = task.createdById === userId
   const isAdmin = task.familyId ? adminFamilyIds.has(task.familyId) : false
@@ -38,11 +38,13 @@ function toTaskItem(task: TaskWithCreator, userId: string, adminFamilyIds: Set<s
     reminderEnabled: task.reminderEnabled,
     reminderMinutes: task.reminderMinutes,
     visibility: task.visibility,
+    assignee: task.assignee,
     recurrence: task.recurrence,
     weekdays: task.weekdays,
     familyId: task.familyId,
     muted: task.notificationSettings?.[0]?.muted ?? false,
-    canDelete: canDeleteTask(task, userId, adminFamilyIds),
+    canDelete: canManageTask(task, userId, adminFamilyIds),
+    canEdit: canManageTask(task, userId, adminFamilyIds),
     createdBy: task.createdBy,
   }
 }
@@ -111,18 +113,8 @@ export async function createTask(userId: string, input: TaskInput) {
 
   const task = await prisma.task.create({
     data: {
-      title: input.title,
-      date: dateOnly(input.date),
-      time: input.time,
-      startsAt: toUtcDate(input.date, input.time, user.timezone),
-      timezone: user.timezone,
-      reminderEnabled: input.reminderEnabled,
-      reminderMinutes: input.reminderEnabled ? input.reminderMinutes ?? null : null,
-      visibility: input.visibility,
-      recurrence: input.recurrence,
-      weekdays: input.recurrence === 'WEEKLY' ? normalizeWeekdays(input.weekdays) : [],
+      ...taskData(user, input, familyId),
       createdById: userId,
-      familyId,
     },
     include: {
       ...taskInclude,
@@ -153,10 +145,50 @@ export async function deleteTask(userId: string, taskId: string) {
     where: { id: taskId, ...visibleWhere(userId, access.familyIds) },
   })
   if (!task) throw new AppError('Tarefa não encontrada.', 404, 'TASK_NOT_FOUND')
-  if (!canDeleteTask(task, userId, access.adminFamilyIds)) {
+  if (!canManageTask(task, userId, access.adminFamilyIds)) {
     throw new AppError('Você não pode excluir esta tarefa familiar.', 403, 'FORBIDDEN')
   }
   await prisma.task.delete({ where: { id: task.id } })
+}
+
+function taskData(user: User, input: TaskInput, familyId: string | null) {
+  return {
+    title: input.title,
+    date: dateOnly(input.date),
+    time: input.time,
+    startsAt: toUtcDate(input.date, input.time, user.timezone),
+    timezone: user.timezone,
+    reminderEnabled: input.reminderEnabled,
+    reminderMinutes: input.reminderEnabled ? input.reminderMinutes ?? null : null,
+    visibility: input.visibility,
+    assignee: input.assignee,
+    recurrence: input.recurrence,
+    weekdays: input.recurrence === 'WEEKLY' ? normalizeWeekdays(input.weekdays) : [],
+    familyId,
+  }
+}
+
+export async function updateTask(userId: string, taskId: string, input: TaskInput) {
+  const user = await requireUser(userId)
+  const access = await getFamilyAccess(userId)
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, ...visibleWhere(userId, access.familyIds) },
+  })
+  if (!task) throw new AppError('Tarefa não encontrada.', 404, 'TASK_NOT_FOUND')
+  if (!canManageTask(task, userId, access.adminFamilyIds)) {
+    throw new AppError('Você não pode editar esta tarefa familiar.', 403, 'FORBIDDEN')
+  }
+
+  const familyId = await resolveFamilyId(user, input, access.activeFamilyId)
+  const updated = await prisma.task.update({
+    where: { id: task.id },
+    data: taskData(user, input, familyId),
+    include: {
+      ...taskInclude,
+      notificationSettings: { where: { userId }, select: { muted: true } },
+    },
+  })
+  return toTaskItem(updated, userId, access.adminFamilyIds)
 }
 
 export async function setTaskMuted(userId: string, taskId: string, muted: boolean) {

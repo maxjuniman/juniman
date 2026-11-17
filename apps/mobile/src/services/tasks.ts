@@ -9,6 +9,10 @@ export function createTask(input: TaskInput) {
   return api<TaskItem>('/api/tasks', { method: 'POST', body: input })
 }
 
+export function updateTask(id: string, input: TaskInput) {
+  return api<TaskItem>(`/api/tasks/${id}`, { method: 'PATCH', body: input })
+}
+
 export function deleteTask(id: string) {
   return api<void>(`/api/tasks/${id}`, { method: 'DELETE' })
 }

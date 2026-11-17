@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { formatShortDate } from '../lib/dates'
-import { recurrenceLabel, type TaskItem } from '../shared'
+import { assigneeOption, recurrenceLabel, type TaskItem } from '../shared'
 import { useTheme } from '../theme/ThemeProvider'
 
 type Props = {
@@ -12,16 +12,16 @@ type Props = {
 
 export function TaskCard({ task, currentUserId, onPress }: Props) {
   const { palette, fonts } = useTheme()
-  const family = task.visibility === 'FAMILY'
-  const color = family ? palette.family : palette.personal
-  const soft = family ? palette.familySoft : palette.personalSoft
-  const owner = family && task.createdBy.id !== currentUserId ? task.createdBy.name : null
+  const member = assigneeOption(task.assignee)
+  const color = member.color
+  const soft = member.soft
+  const owner = task.visibility === 'FAMILY' && task.createdBy.id !== currentUserId ? task.createdBy.name : null
 
   return (
     <Pressable accessibilityRole="button" onPress={onPress} style={[styles.card, { backgroundColor: palette.surface }]}>
       <View style={[styles.bar, { backgroundColor: color }]} />
       <View style={[styles.icon, { backgroundColor: soft }]}>
-        <Ionicons name={family ? 'people' : 'person'} size={18} color={color} />
+        <Ionicons name={task.assignee === 'FAMILY' ? 'people' : 'person'} size={18} color={color} />
       </View>
       <View style={styles.copy}>
         <Text style={{ color: palette.text, fontFamily: fonts.bold, fontSize: 16 }} numberOfLines={2}>
@@ -31,7 +31,7 @@ export function TaskCard({ task, currentUserId, onPress }: Props) {
           {formatShortDate(task.date)} · {task.time}
         </Text>
         <Text style={{ color: palette.muted, fontFamily: fonts.semibold, fontSize: 12 }}>
-          {family ? 'Família' : 'Pessoal'}
+          {member.label}
           {task.recurrence === 'WEEKLY' ? ` · ${recurrenceLabel(task.weekdays)}` : ''}
           {owner ? ` · ${owner}` : ''}
         </Text>

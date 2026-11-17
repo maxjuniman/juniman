@@ -13,6 +13,7 @@
       "backgroundColor": "#F7F4F1"
     },
     "plugins": [
+      "./plugins/with-cleartext",
       "expo-router",
       [
         "expo-splash-screen",
@@ -29,6 +30,7 @@
       [
         "expo-notifications",
         {
+          "icon": "./assets/notification-icon.png",
           "color": "#5C8FBF"
         }
       ],
@@ -41,7 +43,12 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.junimans.calendar"
+      "bundleIdentifier": "com.junimans.calendar",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "package": "com.junimans.calendar",
